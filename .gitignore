@@ -1,2 +1,4 @@
 cache/
 ckpt/
+wandb/
+__pycache__/
