@@ -43,7 +43,7 @@ def main(args):
         
         prob = args.cls_pred_path.read_text()
         prob_list = prob.strip().split('\n')[1:]
-        prob_list = [p.split('\t')[-1] for p in prob_list]
+        prob_list = [float(p.split('\t')[-1]) for p in prob_list]
 
         test_data_list = json.loads(args.test_path.read_text())
         data = list()

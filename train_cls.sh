@@ -3,7 +3,7 @@ python dataset_cls.py --do_train
 
 # training
 python text-classification/run_glue.py \
-  --model_name_or_path bert-base-chinese \
+  --model_name_or_path hfl/chinese-roberta-wwm-ext \
   --train_file ./cache/cls_train.json \
   --validation_file ./cache/cls_dev.json \
   --do_train \

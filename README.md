@@ -31,4 +31,4 @@ bash run.sh <context_file_path> <test_file_path> <prediction_file_path>
 
 ## Reference
 + [`text-classification`](https://github.com/huggingface/transformers/tree/v4.5.0/examples/text-classification)
-+ [`question-answering example`](https://github.com/huggingface/transformers/tree/v4.5.0/examples/question-answering)
++ [`question-answering`](https://github.com/huggingface/transformers/tree/v4.5.0/examples/question-answering)
