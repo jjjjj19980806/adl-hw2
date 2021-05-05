@@ -45,7 +45,7 @@ from transformers.utils import check_min_version
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
-check_min_version("4.6.0.dev0")
+check_min_version("4.5.0")
 
 logger = logging.getLogger(__name__)
 
@@ -84,17 +84,17 @@ class DataTrainingArguments:
             "value if set."
         },
     )
-    max_eval_samples: Optional[int] = field(
+    max_val_samples: Optional[int] = field(
         default=None,
         metadata={
-            "help": "For debugging purposes or quicker training, truncate the number of evaluation examples to this "
+            "help": "For debugging purposes or quicker training, truncate the number of validation examples to this "
             "value if set."
         },
     )
-    max_predict_samples: Optional[int] = field(
+    max_test_samples: Optional[int] = field(
         default=None,
         metadata={
-            "help": "For debugging purposes or quicker training, truncate the number of prediction examples to this "
+            "help": "For debugging purposes or quicker training, truncate the number of test examples to this "
             "value if set."
         },
     )
@@ -209,20 +209,18 @@ def main():
     # Downloading and loading xnli dataset from the hub.
     if training_args.do_train:
         if model_args.train_language is None:
-            train_dataset = load_dataset("xnli", model_args.language, split="train", cache_dir=model_args.cache_dir)
+            train_dataset = load_dataset("xnli", model_args.language, split="train")
         else:
-            train_dataset = load_dataset(
-                "xnli", model_args.train_language, split="train", cache_dir=model_args.cache_dir
-            )
+            train_dataset = load_dataset("xnli", model_args.train_language, split="train")
         label_list = train_dataset.features["label"].names
 
     if training_args.do_eval:
-        eval_dataset = load_dataset("xnli", model_args.language, split="validation", cache_dir=model_args.cache_dir)
+        eval_dataset = load_dataset("xnli", model_args.language, split="validation")
         label_list = eval_dataset.features["label"].names
 
     if training_args.do_predict:
-        predict_dataset = load_dataset("xnli", model_args.language, split="test", cache_dir=model_args.cache_dir)
-        label_list = predict_dataset.features["label"].names
+        test_dataset = load_dataset("xnli", model_args.language, split="test")
+        label_list = test_dataset.features["label"].names
 
     # Labels
     num_labels = len(label_list)
@@ -286,8 +284,8 @@ def main():
             logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
 
     if training_args.do_eval:
-        if data_args.max_eval_samples is not None:
-            eval_dataset = eval_dataset.select(range(data_args.max_eval_samples))
+        if data_args.max_val_samples is not None:
+            eval_dataset = eval_dataset.select(range(data_args.max_val_samples))
         eval_dataset = eval_dataset.map(
             preprocess_function,
             batched=True,
@@ -295,9 +293,9 @@ def main():
         )
 
     if training_args.do_predict:
-        if data_args.max_predict_samples is not None:
-            predict_dataset = predict_dataset.select(range(data_args.max_predict_samples))
-        predict_dataset = predict_dataset.map(
+        if data_args.max_test_samples is not None:
+            test_dataset = test_dataset.select(range(data_args.max_test_samples))
+        test_dataset = test_dataset.map(
             preprocess_function,
             batched=True,
             load_from_cache_file=not data_args.overwrite_cache,
@@ -334,12 +332,13 @@ def main():
 
     # Training
     if training_args.do_train:
-        checkpoint = None
-        if training_args.resume_from_checkpoint is not None:
-            checkpoint = training_args.resume_from_checkpoint
-        elif last_checkpoint is not None:
-            checkpoint = last_checkpoint
-        train_result = trainer.train(resume_from_checkpoint=checkpoint)
+        if last_checkpoint is not None:
+            model_path = last_checkpoint
+        elif os.path.isdir(model_args.model_name_or_path):
+            model_path = model_args.model_name_or_path
+        else:
+            model_path = None
+        train_result = trainer.train(model_path=model_path)
         metrics = train_result.metrics
         max_train_samples = (
             data_args.max_train_samples if data_args.max_train_samples is not None else len(train_dataset)
@@ -357,8 +356,8 @@ def main():
         logger.info("*** Evaluate ***")
         metrics = trainer.evaluate(eval_dataset=eval_dataset)
 
-        max_eval_samples = data_args.max_eval_samples if data_args.max_eval_samples is not None else len(eval_dataset)
-        metrics["eval_samples"] = min(max_eval_samples, len(eval_dataset))
+        max_val_samples = data_args.max_val_samples if data_args.max_val_samples is not None else len(eval_dataset)
+        metrics["eval_samples"] = min(max_val_samples, len(eval_dataset))
 
         trainer.log_metrics("eval", metrics)
         trainer.save_metrics("eval", metrics)
@@ -366,20 +365,18 @@ def main():
     # Prediction
     if training_args.do_predict:
         logger.info("*** Predict ***")
-        predictions, labels, metrics = trainer.predict(predict_dataset, metric_key_prefix="predict")
+        predictions, labels, metrics = trainer.predict(test_dataset)
 
-        max_predict_samples = (
-            data_args.max_predict_samples if data_args.max_predict_samples is not None else len(predict_dataset)
-        )
-        metrics["predict_samples"] = min(max_predict_samples, len(predict_dataset))
+        max_test_samples = data_args.max_test_samples if data_args.max_test_samples is not None else len(test_dataset)
+        metrics["test_samples"] = min(max_test_samples, len(test_dataset))
 
-        trainer.log_metrics("predict", metrics)
-        trainer.save_metrics("predict", metrics)
+        trainer.log_metrics("test", metrics)
+        trainer.save_metrics("test", metrics)
 
         predictions = np.argmax(predictions, axis=1)
-        output_predict_file = os.path.join(training_args.output_dir, "predictions.txt")
+        output_test_file = os.path.join(training_args.output_dir, "test_predictions.txt")
         if trainer.is_world_process_zero():
-            with open(output_predict_file, "w") as writer:
+            with open(output_test_file, "w") as writer:
                 writer.write("index\tprediction\n")
                 for index, item in enumerate(predictions):
                     item = label_list[item]

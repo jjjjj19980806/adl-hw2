@@ -33,9 +33,11 @@ def main(args):
         num_training_sample = int(len(data) * (1 - args.dev_ratio))
         train_spilt = {'data': data[:num_training_sample]}
         args.qa_train_path.write_text(json.dumps(train_spilt, indent=2))
+        logging.info(f'saving qa_train at {args.qa_train_path}')
 
         dev_spilt = {'data': data[num_training_sample:]}
         args.qa_dev_path.write_text(json.dumps(dev_spilt, indent=2))
+        logging.info(f'saving qa_dev at {args.qa_dev_path}')
 
     if args.do_predict:
         
@@ -66,6 +68,7 @@ def main(args):
         
         test_spilt = {'data': data}
         args.qa_test_path.write_text(json.dumps(test_spilt, indent=2))
+        logging.info(f'saving qa_test at {args.qa_test_path}')
 
 
 def parse_args():
@@ -92,7 +95,7 @@ def parse_args():
         "--cls_pred_path",
         type=Path,
         help="Path to the paragraphs prediction file.",
-        default="./cache/predict_results_None.txt",
+        default="./cache/test_results_None.txt",
     )
     parser.add_argument(
         "--output_dir",

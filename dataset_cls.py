@@ -39,9 +39,11 @@ def main(args):
         num_training_sample = int(len(data) * (1 - args.dev_ratio))
         train_spilt = {'data': data[:num_training_sample]}
         args.cls_train_path.write_text(json.dumps(train_spilt, indent=2))
+        logging.info(f'saving cls_train at {args.cls_train_path}')
 
         dev_spilt = {'data': data[num_training_sample:]}
         args.cls_dev_path.write_text(json.dumps(dev_spilt, indent=2))
+        logging.info(f'saving cls_dev at {args.cls_dev_path}')
 
     if args.do_predict:
         
@@ -60,6 +62,7 @@ def main(args):
         
         test_spilt = {'data': data}
         args.cls_test_path.write_text(json.dumps(test_spilt, indent=2))
+        logging.info(f'saving cls_test at {args.cls_test_path}')
 
 
 def parse_args():

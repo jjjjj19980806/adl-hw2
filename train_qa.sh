@@ -11,11 +11,11 @@ python question-answering/run_qa.py \
   --per_device_train_batch_size 12 \
   --learning_rate 3e-5 \
   --num_train_epochs 2 \
-  --max_seq_length 384 \
+  --max_seq_length 512 \
   --doc_stride 128 \
   --overwrite_output_dir yes \
   --output_dir ./ckpt/qa/ \
   --fp16 yes \
-  # --run_name wandb_test \
+  # --run_name wandb_name \
   # --evaluation_strategy steps \
   # --eval_steps 500 \
