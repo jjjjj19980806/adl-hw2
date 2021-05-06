@@ -1,4 +1,7 @@
 cache/
 ckpt/
 wandb/
+
+*.zip
+
 __pycache__/
