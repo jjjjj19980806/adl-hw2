@@ -10,6 +10,7 @@
 
 #####  CLS part #####
 
+python dataset_cls.py --do_train
 python dataset_cls.py --do_predict --context_path "${1}" --test_path "${2}" 
 
 python text-classification/run_glue.py \
@@ -25,6 +26,7 @@ python text-classification/run_glue.py \
 
 ##### QA part #####
 
+python dataset_qa.py --do_train
 python dataset_qa.py --do_predict --context_path "${1}" --test_path "${2}"
 
 python question-answering/run_qa.py \
@@ -37,6 +39,5 @@ python question-answering/run_qa.py \
   --doc_stride 128 \
   --output_dir ./cache/ \
   --fp16 yes \
-
 
 cp ./cache/test_predictions.json "${3}"
