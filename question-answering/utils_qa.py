@@ -24,6 +24,7 @@ from typing import Optional, Tuple
 import numpy as np
 from tqdm.auto import tqdm
 
+import spacy
 
 logger = logging.getLogger(__name__)
 
@@ -425,3 +426,80 @@ def postprocess_qa_predictions_with_beam_search(
                 writer.write(json.dumps(scores_diff_json, indent=4) + "\n")
 
     return all_predictions, scores_diff_json
+
+
+
+def collect_answers(data):
+    answers = {}
+    for qa in data:
+        answers[qa['id']] = {
+            'answers': [a['text'] for a in qa['answers']]
+        }
+
+    return answers
+
+
+class Tokenizer:
+    def __init__(self):
+        self.nlp = spacy.load('zh_core_web_md', disable=['ner', 'parser', 'tagger'])
+
+    def __call__(self, text, remove_punc=False):
+        tokens = list(self.nlp(text))
+        if remove_punc:
+            tokens = [e for e in tokens if not e.is_punct]
+        tokens = [e.text for e in tokens]
+        return tokens
+
+
+def compute_em(ans, pred):
+    def em(a, p):
+        return int(''.join(a) == ''.join(p))
+
+    return max([em(a, pred) for a in ans])
+
+
+def compute_f1(ans, pred):
+    def f1(a, p):
+        common = collections.Counter(a) & collections.Counter(p)
+        tp = sum(common.values())
+        if tp == 0:
+            return 0
+        precision = tp / len(p)
+        recall = tp / len(a)
+
+        return (2 * precision * recall) / (precision + recall)
+
+    return max([f1(a, pred) for a in ans])
+
+
+def compute_metric(ans, pred, tokenizer):
+    ans = [tokenizer(a, remove_punc=True) for a in ans]
+    pred = tokenizer(pred, remove_punc=True)
+
+    return {
+        'em': compute_em(ans, pred),
+        'f1': compute_f1(ans, pred)
+    }
+
+
+def compute_metrics_chinese(answers, predictions):
+    tokenizer = Tokenizer()
+    answers = {a['id']: a['answers']['text'] for a in answers}
+    predictions = {p['id']: p['prediction_text'] for p in predictions}
+    metrics = []
+    for id_ in list(answers.keys()):
+        if id_ not in predictions:
+            print(f'[!] Cannot find answer for id {id_} in model predictions')
+            continue
+        prediction = predictions[id_]
+        metric = compute_metric(answers[id_], prediction, tokenizer)
+        metrics.append(metric)
+
+    n_total = len(metrics)
+    result = {
+        'eval_samples': n_total,
+        'exact_match': sum([m['em'] for m in metrics]) / n_total,
+        'f1': sum([m['f1'] for m in metrics]) / n_total
+    }
+
+    return result

@@ -20,7 +20,7 @@ python -m spacy download zh_core_web_md
 bash train_cls.sh  # train paragraphs classification model
 bash train_qa.sh   # train question-answering model
 
-# just download model checkpoint form dropbox
+# just download model checkpoint from dropbox
 bash download.sh
 ```
 ### Prediction

@@ -42,7 +42,7 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 from transformers.utils import check_min_version
-from utils_qa import postprocess_qa_predictions
+from utils_qa import postprocess_qa_predictions, compute_metrics_chinese
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -540,7 +540,7 @@ def main():
     metric = load_metric("squad_v2" if data_args.version_2_with_negative else "squad")
 
     def compute_metrics(p: EvalPrediction):
-        return metric.compute(predictions=p.predictions, references=p.label_ids)
+        return compute_metrics_chinese(predictions=p.predictions, answers=p.label_ids)
 
     # Initialize our Trainer
     trainer = QuestionAnsweringTrainer(
