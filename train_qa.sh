@@ -16,6 +16,7 @@ python question-answering/run_qa.py \
   --overwrite_output_dir yes \
   --output_dir ./ckpt/qa/ \
   --fp16 yes \
-  # --run_name wandb_name \
   # --evaluation_strategy steps \
-  # --eval_steps 500 \
+  # --eval_steps 100 \
+  # --report_to wandb \
+  # --run_name qa_eval \
