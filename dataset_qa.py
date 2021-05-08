@@ -33,11 +33,11 @@ def main(args):
         num_training_sample = int(len(data) * (1 - args.dev_ratio))
         train_spilt = {'data': data[:num_training_sample]}
         args.qa_train_path.write_text(json.dumps(train_spilt, indent=2))
-        logging.info(f'saving qa_train at {args.qa_train_path}')
+        logging.info(f'saving qa_train at {args.qa_train_path}, # of samples = {num_training_sample}')
 
         dev_spilt = {'data': data[num_training_sample:]}
         args.qa_dev_path.write_text(json.dumps(dev_spilt, indent=2))
-        logging.info(f'saving qa_dev at {args.qa_dev_path}')
+        logging.info(f'saving qa_dev at {args.qa_dev_path}, # of samples = {len(data) - num_training_sample}')
 
     if args.do_predict:
         
@@ -68,7 +68,7 @@ def main(args):
         
         test_spilt = {'data': data}
         args.qa_test_path.write_text(json.dumps(test_spilt, indent=2))
-        logging.info(f'saving qa_test at {args.qa_test_path}')
+        logging.info(f'saving qa_test at {args.qa_test_path}, # of samples = {len(data)}')
 
 
 def parse_args():
